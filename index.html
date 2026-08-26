@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тёплый кадр — Совет директоров ИИ</title>
+<style>
+  /* ===== Переменные и базовые стили (Facebook-стиль) ===== */
+  :root {
+    --fb-blue: #1877f2;
+    --fb-blue-dark: #166fe5;
+    --fb-green: #42b72a;
+    --bg: #f0f2f5;
+    --card: #ffffff;
+    --text: #1c1e21;
+    --text-secondary: #65676b;
+    --border: #dddfe2;
+    --radius: 10px;
+    --shadow: 0 1px 2px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.05);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 15px;
+    line-height: 1.45;
+  }
+  .container { max-width: 920px; margin: 0 auto; padding: 0 12px 40px; }
+
+  /* ===== Шапка ===== */
+  .header {
+    background: linear-gradient(135deg, #1877f2 0%, #0f5fd0 100%);
+    color: #fff;
+    padding: 12px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    box-shadow: 0 2px 8px rgba(0,0,0,.15);
+  }
+  .header-inner { max-width: 920px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .header h1 { font-size: 18px; margin: 0; display: flex; align-items: center; gap: 8px; }
+  .logo { width: 32px; height: 32px; border-radius: 8px; background: rgba(255,255,255,.22); display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; }
+  .btn-reset {
+    background: rgba(255,255,255,.15); color: #fff; border: 1px solid rgba(255,255,255,.4);
+    padding: 7px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; cursor: pointer;
+  }
+  .btn-reset:hover { background: rgba(255,255,255,.3); }
+
+  /* ===== Навигация (4 вкладки) ===== */
+  .nav { background: var(--card); border-bottom: 1px solid var(--border); position: sticky; top: 56px; z-index: 40; }
+  .nav-inner { max-width: 920px; margin: 0 auto; display: flex; overflow-x: auto; }
+  .nav button {
+    flex: 1; min-width: 90px; padding: 12px 8px; border: none; background: none; cursor: pointer;
+    font-size: 14px; font-weight: 600; color: var(--text-secondary);
+    border-bottom: 3px solid transparent; white-space: nowrap;
+  }
+  .nav button.active { color: var(--fb-blue); border-bottom-color: var(--fb-blue); }
+
+  /* ===== Карточки ===== */
+  .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; margin-bottom: 14px; }
+  .card h2 { margin: 0 0 10px; font-size: 17px; }
+  .card h3 { margin: 14px 0 6px; font-size: 15px; }
+  .card p { margin: 6px 0; }
+  .muted { color: var(--text-secondary); font-size: 13px; }
+  .section { display: none; }
+  .section.active { display: block; animation: fadeIn .3s ease; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: none; }
+  }
+
+  .feature-list { list-style: none; padding: 0; margin: 8px 0; }
+  .feature-list li { padding: 9px 0; border-bottom: 1px solid var(--border); display: flex; gap: 10px; align-items: flex-start; }
+  .feature-list li:last-child { border-bottom: none; }
+  .feature-ico { width: 30px; height: 30px; border-radius: 50%; flex: 0 0 30px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 13px; font-weight: 700; }
+  .model-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .model-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+  /* ===== Режимы работы ===== */
+  .mode-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .mode-btn {
+    flex: 1; min-width: 100px; padding: 9px 6px; border: 1px solid var(--border); background: var(--card);
+    border-radius: 20px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--text-secondary);
+    transition: all .15s;
+  }
+  .mode-btn.active { background: var(--fb-blue); border-color: var(--fb-blue); color: #fff; }
+
+  /* ===== Общий чат ===== */
+  .chat-box {
+    display: flex; flex-direction: column; gap: 10px; padding: 12px; background: #fff;
+    border: 1px solid var(--border); border-radius: var(--radius);
+    min-height: 320px; max-height: 52vh; overflow-y: auto; margin-bottom: 10px;
+  }
+  .msg { display: flex; gap: 8px; animation: fadeIn .35s ease; max-width: 100%; }
+  .msg.user { flex-direction: row-reverse; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%; color: #fff; font-weight: 700; font-size: 12px;
+    display: flex; align-items: center; justify-content: center; flex: 0 0 36px;
+  }
+  .msg-body { max-width: 78%; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .msg.user .msg-body { align-items: flex-end; }
+  .msg-name { font-size: 12px; font-weight: 700; }
+  .bubble {
+    background: #f0f2f5; border-left: 3px solid var(--text-secondary);
+    border-radius: 4px 12px 12px 12px; padding: 9px 12px; font-size: 14px;
+    word-wrap: break-word; overflow-wrap: break-word;
+  }
+  .msg.user .bubble { background: var(--fb-blue); color: #fff; border-left: none; border-radius: 12px 4px 12px 12px; }
+  .msg-time { font-size: 11px; color: var(--text-secondary); }
+  .msg.user .msg-time { text-align: right; }
+
+  .chat-controls { display: flex; flex-direction: column; gap: 8px; }
+  .input-row { display: flex; gap: 8px; }
+  .input-row input {
+    flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--border);
+    border-radius: 20px; font-size: 14px; outline: none;
+  }
+  .input-row input:focus { border-color: var(--fb-blue); }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .btn { padding: 9px 14px; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; color: #fff; transition: filter .15s; }
+  .btn:hover { filter: brightness(1.08); }
+  .btn:disabled { opacity: .55; cursor: not-allowed; }
+  .btn-blue { background: var(--fb-blue); }
+  .btn-green { background: var(--fb-green); }
+  .btn-orange { background: #e65100; }
+  .btn-gray { background: #65676b; }
+  .hint { font-size: 12px; color: var(--text-secondary); }
+
+  /* ===== Генерация ===== */
+  .upload-area {
+    border: 2px dashed #c4c9cf; border-radius: var(--radius); padding: 26px 14px;
+    text-align: center; cursor: pointer; color: var(--text-secondary);
+    transition: border-color .15s, background .15s;
+  }
+  .upload-area:hover, .upload-area.drag { border-color: var(--fb-blue); background: #f5f9ff; }
+  .gen-buttons { display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 12px; }
+  .gen-out { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .gen-item {
+    background: #f0f2f5; border-left: 3px solid var(--fb-blue);
+    border-radius: 4px 10px 10px 4px; padding: 10px 12px; font-size: 13px;
+    animation: fadeIn .3s ease; word-wrap: break-word;
+  }
+
+  /* ===== Модели ===== */
+  .model-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .model-card {
+    display: flex; gap: 12px; align-items: center; border: 2px solid var(--border);
+    border-radius: var(--radius); padding: 12px; cursor: pointer; background: #fff;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .model-card.active { border-color: var(--fb-blue); box-shadow: 0 0 0 2px rgba(24,119,242,.15); }
+  .model-card .avatar { width: 44px; height: 44px; font-size: 14px; flex: 0 0 44px; }
+  .model-info { flex: 1; min-width: 0; }
+  .model-info .m-name { font-weight: 700; }
+  .model-info .m-desc { font-size: 12px; color: var(--text-secondary); }
+  .model-check { font-size: 18px; font-weight: 700; color: var(--fb-blue); }
+
+  /* ===== Адаптив ===== */
+  @media (min-width: 768px) {
+    .gen-buttons { grid-template-columns: repeat(3, 1fr); }
+    .model-grid { grid-template-columns: repeat(2, 1fr); }
+    .chat-box { max-height: 60vh; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Шапка ===== -->
+<header class="header">
+  <div class="header-inner">
+    <h1><span class="logo">ТК</span> Тёплый кадр</h1>
+    <button class="btn-reset" onclick="resetAllChat()">Сброс</button>
+  </div>
+</header>
+
+<!-- ===== Навигация ===== -->
+<nav class="nav">
+  <div class="nav-inner">
+    <button data-tab="home" class="active" onclick="switchTab('home')">Главная</button>
+    <button data-tab="chat" onclick="switchTab('chat')">Общий чат</button>
+    <button data-tab="generation" onclick="switchTab('generation')">Генерация</button>
+    <button data-tab="models" onclick="switchTab('models')">Модели</button>
+  </div>
+</nav>
+
+<main class="container">
+
+  <!-- ===== ВКЛАДКА: ГЛАВНАЯ ===== -->
+  <section id="tab-home" class="section active">
+    <div class="card">
+      <h2>Добро пожаловать в «Тёплый кадр»</h2>
+      <p>Это рабочее пространство, где 5 ИИ-моделей собираются в общий чат и помогают решать задачи: дают советы, критикуют друг друга и вместе дорабатывают идеи.</p>
+    </div>
+    <div class="card">
+      <h2>Что умеет приложение</h2>
+      <ul class="feature-list">
+        <li><span class="feature-ico" style="background:#1877f2">Ч</span>
+          <div><b>Общий чат</b><br><span class="muted">Все модели видят сообщения друг друга. Отправляй вопрос одному или всем сразу.</span></div></li>
+        <li><span class="feature-ico" style="background:#42b72a">Г</span>
+          <div><b>Генерация контента</b><br><span class="muted">Загрузка файлов и генерация видео, изображений и текста.</span></div></li>
+        <li><span class="feature-ico" style="background:#e65100">Р</span>
+          <div><b>3 режима работы</b><br><span class="muted">Совет, Критика и Доработка — переключаются кнопками в чате.</span></div></li>
+        <li><span class="feature-ico" style="background:#7b1fa2">@</span>
+          <div><b>Упоминания моделей</b><br><span class="muted">Напиши @Ox Alpha — и ответит только она.</span></div></li>
+        <li><span class="feature-ico" style="background:#2e7d32">С</span>
+          <div><b>Автосохранение</b><br><span class="muted">История чата и настройки хранятся в браузере (localStorage).</span></div></li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Участники чата</h3>
+      <div class="model-chips" id="homeChips"></div>
+      <p class="muted">Выбери модель на вкладке «Модели» или позови её через @упоминание.</p>
+    </div>
+  </section>
+
+  <!-- ===== ВКЛАДКА: ОБЩИЙ ЧАТ ===== -->
+  <section id="tab-chat" class="section">
+    <div class="card">
+      <h2>Общий чат — комната знаний</h2>
+      <div class="mode-bar" id="modeBar">
+        <button class="mode-btn active" data-mode="advice" onclick="selectMode('advice')">Совет</button>
+        <button class="mode-btn" data-mode="critic" onclick="selectMode('critic')">Критика</button>
+        <button class="mode-btn" data-mode="refine" onclick="selectMode('refine')">Доработка</button>
+      </div>
+      <div class="chat-box" id="chatBox"></div>
+      <div class="chat-controls">
+        <div class="input-row">
+          <input id="chatInput" type="text" placeholder="Введите сообщение..." autocomplete="off"
+                 onkeydown="if(event.key === 'Enter') sendMessage(false)">
+          <button class="btn btn-blue" onclick="sendMessage(false)">Отправить</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-green" onclick="sendMessage(true)">Всем</button>
+          <button class="btn btn-orange" onclick="brainstorm()">Мозговой штурм</button>
+          <button class="btn btn-gray" onclick="clearChat()">Очистить</button>
+        </div>
+        <div class="hint" id="chatHint"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== ВКЛАДКА: ГЕНЕРАЦИЯ ===== -->
+  <section id="tab-generation" class="section">
+    <div class="card">
+      <h2>Генерация контента</h2>
+      <p class="muted">Загрузите файлы (изображения, видео) и сгенерируйте новый контент. Все модели имеют доступ к контексту «Тёплого кадра».</p>
+      <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
+        <div><b>Нажмите, чтобы выбрать файл</b></div>
+        <div class="muted" id="uploadStatus">Поддерживаются изображения и видео</div>
+      </div>
+      <input type="file" id="fileInput" accept="image/*,video/*" style="display:none">
+      <div class="gen-buttons">
+        <button class="btn btn-blue" onclick="generateContent('video')">Сгенерировать видео</button>
+        <button class="btn btn-green" onclick="generateContent('image')">Сгенерировать изображение</button>
+        <button class="btn btn-orange" onclick="generateContent('text')">Сгенерировать текст</button>
+      </div>
+      <div class="gen-out" id="genOut"></div>
+    </div>
+  </section>
+
+  <!-- ===== ВКЛАДКА: МОДЕЛИ ===== -->
+  <section id="tab-models" class="section">
+    <div class="card">
+      <h2>Выбор активной модели</h2>
+      <p class="muted">Активная модель отвечает по кнопке «Отправить». Кнопка «Всем» вызывает все 5 моделей сразу. Нажмите на карточку, чтобы выбрать модель.</p>
+      <div class="model-grid" id="modelGrid"></div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+'use strict';
+
+/* ============================================================
+   ТЁПЛЫЙ КАДР — СОВЕТ ДИРЕКТОРОВ ИИ
+   Эмуляция ответов моделей. В реальном проекте generateModelReply
+   заменяется вызовами API (OpenRouter, Hugging Face, B.AI).
+   ============================================================ */
+
+/* ===== 1. ДАННЫЕ ===== */
+
+// Пять моделей — участников общего чата
+const MODELS = {
+  ox: {
+    id: 'ox', name: 'Ox Alpha', short: 'OA', color: '#d32f2f', bg: '#ffebee',
+    desc: 'Флагман Z.ai. Сильная в логике, аналитике и рассуждениях.'
+  },
+  'qwen-flash': {
+    id: 'qwen-flash', name: 'Qwen Flash', short: 'QF', color: '#1976d2', bg: '#e3f2fd',
+    desc: 'Лёгкая модель Alibaba. Молниеносные ответы для рутинных задач.'
+  },
+  'qwen-27b': {
+    id: 'qwen-27b', name: 'Qwen 27B', short: 'Q27', color: '#2e7d32', bg: '#e8f5e9',
+    desc: 'Мощная модель Alibaba. Глубокие ответы, сильна в творчестве.'
+  },
+  mimo: {
+    id: 'mimo', name: 'MiMo', short: 'Mi', color: '#e65100', bg: '#fff3e0',
+    desc: 'Модель Xiaomi. Практичные советы и внимание к деталям.'
+  },
+  accio: {
+    id: 'accio', name: 'Accio Work', short: 'AW', color: '#7b1fa2', bg: '#f3e5f5',
+    desc: 'Рабочий ИИ-ассистент. Помогает с задачами, документами и исследованиями.'
+  }
+};
+
+// Варианты ответов для каждой модели (эмуляция)
+const REPLIES = {
+  ox: [
+    'Логичный план: разбей задачу на этапы и начни с самого важного.',
+    'Я бы проанализировал данные и выбрал подход с максимальной пользой.',
+    'Мой вариант — сфокусироваться на результате и проверить каждую деталь.',
+    'Предлагаю взвесить плюсы и минусы, прежде чем принимать решение.'
+  ],
+  'qwen-flash': [
+    'Быстрый ответ: действуй по шагам и не отвлекайся на мелочи.',
+    'Оптимально — упростить процесс и автоматизировать рутину.',
+    'Мой совет: начни с простого решения и улучшай его итерациями.',
+    'Быстрое решение — лучшее решение, когда время ограничено.'
+  ],
+  'qwen-27b': [
+    'Глубокий разбор: важно понять корень задачи, а не бороться с симптомами.',
+    'Можно рассмотреть несколько сценариев и выбрать наиболее устойчивый.',
+    'Вот моя идея: построй структуру, которая масштабируется дальше.',
+    'Попробуй посмотреть на задачу под другим углом — это откроет новые пути.'
+  ],
+  mimo: [
+    'Практичный совет: сделай мини-версию и проверь её на реальных данных.',
+    'Детали решают: обрати внимание на мелочи, которые часто упускают.',
+    'Мой подход — простой и надёжный: меньше сложности, больше пользы.',
+    'Рекомендую составить чек-лист и двигаться по нему последовательно.'
+  ],
+  accio: [
+    'Как рабочий ассистент, я бы структурировал задачу и оформил план действий.',
+    'Могу помочь с документами, исследованиями и автоматизацией рутины.',
+    'Давай разложим задачу на подзадачи и распределим приоритеты.',
+    'Мой ответ — собрать все вводные и предложить готовое решение с шагами.'
+  ]
+};
+
+// Суффиксы в зависимости от режима
+const MODE_SUFFIX = {
+  advice: ' (Совет: рекомендую рассмотреть несколько вариантов и выбрать оптимальный.)',
+  critic: ' (Критика: вижу узкие места — проверь детали и альтернативные сценарии.)',
+  refine: ' (Доработка: можно улучшить — вот уточнения и следующий шаг.)'
+};
+
+const MODE_NAMES = { advice: 'Совет', critic: 'Критика', refine: 'Доработка' };
+
+// Ключи localStorage
+const STORE_KEY = {
+  history: 'tp_chat_history',
+  model: 'tp_selected_model',
+  mode: 'tp_mode',
+  gen: 'tp_generated',
+  seeded: 'tp_seeded'
+};
+
+/* ===== 2. СОСТОЯНИЕ ===== */
+
+let chatHistory = [];      // [{ modelId: 'user'|'ox'|..., text, time }]
+let currentMode = 'advice'; // advice | critic | refine
+let selectedModel = 'ox';   // id из MODELS
+let isBusy = false;         // защита от параллельных генераций
+let lastUploadedFile = null;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/* ===== 3. ХРАНЕНИЕ (localStorage) ===== */
+
+function loadChatHistory() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY.history);
+    chatHistory = raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    chatHistory = [];
+  }
+}
+
+function saveChatHistory() {
+  try { localStorage.setItem(STORE_KEY.history, JSON.stringify(chatHistory)); } catch (e) {}
+}
+
+function saveSetting(key, value) {
+  try { localStorage.setItem(key, value); } catch (e) {}
+}
+
+/* ===== 4. ОТРИСОВКА ===== */
+
+function formatTime(date) {
+  return new Date(date).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+}
+
+function escapeHtml(text) {
+  return text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+// Подсветка @упоминаний моделей цветом модели
+function highlightMentions(text) {
+  const escaped = escapeHtml(text);
+  const names = Object.values(MODELS)
+    .map((m) => m.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+    .join('|');
+  const re = new RegExp('@(' + names + ')', 'gi');
+  return escaped.replace(re, function (match, name) {
+    const model = Object.values(MODELS).find(
+      (m) => m.name.toLowerCase() === name.toLowerCase()
+    );
+    const color = model ? model.color : '#1877f2';
+    return '<span style="color:' + color + ';font-weight:700">@' + name + '</span>';
+  });
+}
+
+function renderMessageEl(msg) {
+  const isUser = msg.modelId === 'user';
+  const wrap = document.createElement('div');
+  wrap.className = isUser ? 'msg user' : 'msg';
+
+  if (!isUser) {
+    const model = MODELS[msg.modelId] || MODELS.accio;
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.style.background = model.color;
+    avatar.textContent = model.short;
+    wrap.appendChild(avatar);
+  }
+
+  const body = document.createElement('div');
+  body.className = 'msg-body';
+
+  const name = document.createElement('div');
+  name.className = 'msg-name';
+  if (isUser) {
+    name.textContent = 'Вы';
+    name.style.color = '#1877f2';
+  } else {
+    const model = MODELS[msg.modelId] || MODELS.accio;
+    name.textContent = model.name;
+    name.style.color = model.color;
+  }
+  body.appendChild(name);
+
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble';
+  if (!isUser) {
+    const model = MODELS[msg.modelId] || MODELS.accio;
+    bubble.style.borderLeftColor = model.color;
+  }
+  bubble.innerHTML = highlightMentions(msg.text);
+  body.appendChild(bubble);
+
+  const time = document.createElement('div');
+  time.className = 'msg-time';
+  time.textContent = msg.time || '';
+  body.appendChild(time);
+
+  wrap.appendChild(body);
+  return wrap;
+}
+
+function scrollToBottom() {
+  const box = document.getElementById('chatBox');
+  if (box) box.scrollTop = box.scrollHeight;
+}
+
+function renderMessages() {
+  const box = document.getElementById('chatBox');
+  if (!box) return;
+  box.innerHTML = '';
+  chatHistory.forEach(function (msg) {
+    box.appendChild(renderMessageEl(msg));
+  });
+  scrollToBottom();
+}
+
+/* ===== 5. ДОБАВЛЕНИЕ СООБЩЕНИЙ ===== */
+
+function addMessage(modelId, text, time) {
+  chatHistory.push({ modelId: modelId, text: text, time: time || formatTime(Date.now()) });
+  saveChatHistory();
+  renderMessages();
+}
+
+/* ===== 6. ОТПРАВКА ===== */
+
+// Поиск @упоминания в тексте (без учёта регистра)
+function detectMention(text) {
+  const lower = text.toLowerCase();
+  for (const m of Object.values(MODELS)) {
+    if (lower.indexOf('@' + m.name.toLowerCase()) !== -1) return m.id;
+  }
+  return null;
+}
+
+// sendMessage(toAll = false): обычная отправка или «Всем»
+function sendMessage(toAll) {
+  if (isBusy) return;
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+  addMessage('user', text);
+
+  if (toAll) {
+    callAllModels(text);
+    return;
+  }
+  const target = detectMention(text) || selectedModel;
+  generateModelReply(target, text, true);
+}
+
+// Генерация ответа одной модели (эмуляция)
+async function generateModelReply(modelId, userText, withDelay) {
+  if (isBusy) return;
+  isBusy = true;
+  try {
+    if (withDelay) await sleep(500 + Math.random() * 600);
+    const pool = REPLIES[modelId] || REPLIES.accio;
+    const reply = pool[Math.floor(Math.random() * pool.length)];
+    addMessage(modelId, reply + MODE_SUFFIX[currentMode]);
+  } finally {
+    isBusy = false;
+  }
+}
+
+// Вызов всех 5 моделей по очереди
+async function callAllModels(userText) {
+  if (isBusy) return;
+  isBusy = true;
+  try {
+    for (const id of Object.keys(MODELS)) {
+      await sleep(450 + Math.random() * 500);
+      const pool = REPLIES[id];
+      addMessage(id, pool[Math.floor(Math.random() * pool.length)] + MODE_SUFFIX[currentMode]);
+    }
+  } finally {
+    isBusy = false;
+  }
+}
+
+// Мозговой штурм: модели по очереди предлагают решения
+async function brainstorm() {
+  if (isBusy) return;
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  input.value = '';
+  if (text) addMessage('user', text);
+
+  isBusy = true;
+  try {
+    const ids = Object.keys(MODELS);
+    for (let i = 0; i < ids.length; i++) {
+      await sleep(600 + i * 350);
+      const pool = REPLIES[ids[i]];
+      addMessage(
+        ids[i],
+        'Идея ' + (i + 1) + ': ' + pool[Math.floor(Math.random() * pool.length)] + MODE_SUFFIX[currentMode]
+      );
+    }
+  } finally {
+    isBusy = false;
+  }
+}
+
+/* ===== 7. ОЧИСТКА ===== */
+
+function clearChat() {
+  chatHistory = [];
+  saveChatHistory();
+  renderMessages();
+}
+
+// Полный сброс: история, настройки, генерации
+function resetAllChat() {
+  if (!confirm('Сбросить всё приложение? История чата, настройки и генерации будут удалены.')) return;
+  try {
+    Object.keys(STORE_KEY).forEach(function (key) { localStorage.removeItem(STORE_KEY[key]); });
+  } catch (e) {}
+  location.reload();
+}
+
+/* ===== 8. РЕЖИМЫ И МОДЕЛИ ===== */
+
+function selectMode(mode) {
+  currentMode = mode;
+  saveSetting(STORE_KEY.mode, mode);
+  document.querySelectorAll('#modeBar .mode-btn').forEach(function (btn) {
+    btn.classList.toggle('active', btn.dataset.mode === mode);
+  });
+}
+
+function updateModeButtons() {
+  document.querySelectorAll('#modeBar .mode-btn').forEach(function (btn) {
+    btn.classList.toggle('active', btn.dataset.mode === currentMode);
+  });
+}
+
+function selectModel(id) {
+  if (!MODELS[id]) return;
+  selectedModel = id;
+  saveSetting(STORE_KEY.model, id);
+  renderModels();
+  updateChatHint();
+}
+
+function renderModels() {
+  const grid = document.getElementById('modelGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  Object.values(MODELS).forEach(function (m) {
+    const card = document.createElement('div');
+    card.className = 'model-card' + (m.id === selectedModel ? ' active' : '');
+    card.onclick = function () { selectModel(m.id); };
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.style.background = m.color;
+    avatar.textContent = m.short;
+
+    const info = document.createElement('div');
+    info.className = 'model-info';
+    const name = document.createElement('div');
+    name.className = 'm-name';
+    name.style.color = m.color;
+    name.textContent = m.name;
+    const desc = document.createElement('div');
+    desc.className = 'm-desc';
+    desc.textContent = m.desc;
+    info.appendChild(name);
+    info.appendChild(desc);
+
+    const check = document.createElement('div');
+    check.className = 'model-check';
+    check.textContent = m.id === selectedModel ? '✓' : '';
+
+    card.appendChild(avatar);
+    card.appendChild(info);
+    card.appendChild(check);
+    grid.appendChild(card);
+  });
+
+  // Чипы моделей на главной
+  const chips = document.getElementById('homeChips');
+  if (chips) {
+    chips.innerHTML = '';
+    Object.values(MODELS).forEach(function (m) {
+      const chip = document.createElement('span');
+      chip.className = 'model-chip';
+      chip.style.background = m.bg;
+      chip.style.color = m.color;
+      const dot = document.createElement('span');
+      dot.className = 'dot';
+      dot.style.background = m.color;
+      chip.appendChild(dot);
+      chip.appendChild(document.createTextNode(m.name));
+      chips.appendChild(chip);
+    });
+  }
+}
+
+function updateChatHint() {
+  const hint = document.getElementById('chatHint');
+  if (!hint) return;
+  const model = MODELS[selectedModel];
+  hint.innerHTML =
+    'Активная модель: <b style="color:' + model.color + '">' + model.name + '</b> · ' +
+    'Режим: <b>' + MODE_NAMES[currentMode] + '</b> · ' +
+    'Упомяните модель через @, например @Ox Alpha';
+}
+
+/* ===== 9. ВКЛАДКИ ===== */
+
+function switchTab(name) {
+  document.querySelectorAll('.nav button').forEach(function (btn) {
+    btn.classList.toggle('active', btn.dataset.tab === name);
+  });
+  document.querySelectorAll('.section').forEach(function (sec) {
+    sec.classList.toggle('active', sec.id === 'tab-' + name);
+  });
+}
+
+/* ===== 10. ГЕНЕРАЦИЯ КОНТЕНТА ===== */
+
+function loadGenerated() {
+  try {
+    const raw = localStorage.getItem(STORE_KEY.gen);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) { return []; }
+}
+
+function saveGenerated(list) {
+  try { localStorage.setItem(STORE_KEY.gen, JSON.stringify(list)); } catch (e) {}
+}
+
+function renderGenerated() {
+  const out = document.getElementById('genOut');
+  if (!out) return;
+  out.innerHTML = '';
+  loadGenerated().forEach(function (item) {
+    const el = document.createElement('div');
+    el.className = 'gen-item';
+    el.textContent = item;
+    out.appendChild(el);
+  });
+}
+
+async function generateContent(type) {
+  const labels = { video: 'видео', image: 'изображение', text: 'текст' };
+  const label = labels[type] || type;
+  const out = document.getElementById('genOut');
+
+  const el = document.createElement('div');
+  el.className = 'gen-item';
+  el.textContent = 'Генерация ' + label + '...';
+  out.prepend(el);
+
+  await sleep(900 + Math.random() * 900);
+
+  const fileInfo = lastUploadedFile ? ' (на основе файла: ' + lastUploadedFile + ')' : '';
+  let result;
+  if (type === 'video') {
+    result = 'Видео готово: 15-секундный ролик в контексте «Тёплого кадра»' + fileInfo;
+  } else if (type === 'image') {
+    result = 'Изображение готово: кадр в стиле «Тёплого кадра»' + fileInfo;
+  } else {
+    result = 'Текст готов: структурированная статья в контексте «Тёплого кадра»' + fileInfo;
+  }
+  el.textContent = result;
+
+  const list = loadGenerated();
+  list.unshift(result);
+  saveGenerated(list.slice(0, 30));
+}
+
+function initUpload() {
+  const area = document.getElementById('uploadArea');
+  const input = document.getElementById('fileInput');
+  if (!area || !input) return;
+
+  area.addEventListener('dragover', function (e) {
+    e.preventDefault();
+    area.classList.add('drag');
+  });
+  area.addEventListener('dragleave', function () { area.classList.remove('drag'); });
+  area.addEventListener('drop', function (e) {
+    e.preventDefault();
+    area.classList.remove('drag');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+  });
+  input.addEventListener('change', function () {
+    if (input.files.length) handleFile(input.files[0]);
+    input.value = '';
+  });
+}
+
+function handleFile(file) {
+  lastUploadedFile = file.name;
+  const size = (file.size / 1024).toFixed(1) + ' КБ';
+  const status = document.getElementById('uploadStatus');
+  if (status) status.textContent = 'Загружен: ' + file.name + ' (' + size + ')';
+
+  const out = document.getElementById('genOut');
+  const el = document.createElement('div');
+  el.className = 'gen-item';
+  el.textContent = 'Файл загружен: ' + file.name + ' (' + size + ')';
+  out.prepend(el);
+
+  const list = loadGenerated();
+  list.unshift('Файл загружен: ' + file.name + ' (' + size + ')');
+  saveGenerated(list.slice(0, 30));
+}
+
+/* ===== 11. ИНИЦИАЛИЗАЦИЯ ===== */
+
+function init() {
+  loadChatHistory();
+  selectedModel = localStorage.getItem(STORE_KEY.model) || 'ox';
+  currentMode = localStorage.getItem(STORE_KEY.mode) || 'advice';
+
+  // Приветственное сообщение при первом запуске
+  if (!chatHistory.length && !localStorage.getItem(STORE_KEY.seeded)) {
+    saveSetting(STORE_KEY.seeded, '1');
+    chatHistory.push({
+      modelId: 'accio',
+      text: 'Привет! Я Accio Work. Это общий чат «Тёплого кадра» — все 5 моделей видят сообщения друг друга. Выбери режим и задай вопрос.',
+      time: formatTime(Date.now())
+    });
+    saveChatHistory();
+  }
+
+  updateModeButtons();
+  renderModels();
+  renderMessages();
+  renderGenerated();
+  updateChatHint();
+  initUpload();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>
