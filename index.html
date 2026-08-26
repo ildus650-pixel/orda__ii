@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Тёплый кадр — Совет директоров ИИ</title>
+<title>Орда ИИ — Совет директоров из 5 моделей</title>
 <style>
   /* ===== Переменные и базовые стили (Facebook-стиль) ===== */
   :root {
@@ -173,7 +173,7 @@
 <!-- ===== Шапка ===== -->
 <header class="header">
   <div class="header-inner">
-    <h1><span class="logo">ТК</span> Тёплый кадр</h1>
+    <h1><span class="logo">ОИ</span> Орда ИИ</h1>
     <button class="btn-reset" onclick="resetAllChat()">Сброс</button>
   </div>
 </header>
@@ -193,8 +193,8 @@
   <!-- ===== ВКЛАДКА: ГЛАВНАЯ ===== -->
   <section id="tab-home" class="section active">
     <div class="card">
-      <h2>Добро пожаловать в «Тёплый кадр»</h2>
-      <p>Это рабочее пространство, где 5 ИИ-моделей собираются в общий чат и помогают решать задачи: дают советы, критикуют друг друга и вместе дорабатывают идеи.</p>
+      <h2>Добро пожаловать в «Орду ИИ»</h2>
+      <p>Это рабочее пространство (ранее — «Тёплый кадр»), где 5 ИИ-моделей собираются в общий чат и помогают решать задачи: дают советы, критикуют друг друга и вместе дорабатывают идеи.</p>
     </div>
     <div class="card">
       <h2>Что умеет приложение</h2>
@@ -227,6 +227,7 @@
         <button class="mode-btn" data-mode="critic" onclick="selectMode('critic')">Критика</button>
         <button class="mode-btn" data-mode="refine" onclick="selectMode('refine')">Доработка</button>
       </div>
+      <div class="hint" id="demoHint">Демо-режим: ответы моделей — эмуляция. Подключение реальных API и бирж настроим позже.</div>
       <div class="chat-box" id="chatBox"></div>
       <div class="chat-controls">
         <div class="input-row">
@@ -248,7 +249,7 @@
   <section id="tab-generation" class="section">
     <div class="card">
       <h2>Генерация контента</h2>
-      <p class="muted">Загрузите файлы (изображения, видео) и сгенерируйте новый контент. Все модели имеют доступ к контексту «Тёплого кадра».</p>
+      <p class="muted">Загрузите файлы (изображения, видео) и сгенерируйте новый контент. Все модели имеют доступ к контексту «Орды ИИ».</p>
       <div class="upload-area" id="uploadArea" onclick="document.getElementById('fileInput').click()">
         <div><b>Нажмите, чтобы выбрать файл</b></div>
         <div class="muted" id="uploadStatus">Поддерживаются изображения и видео</div>
@@ -728,11 +729,11 @@ async function generateContent(type) {
   const fileInfo = lastUploadedFile ? ' (на основе файла: ' + lastUploadedFile + ')' : '';
   let result;
   if (type === 'video') {
-    result = 'Видео готово: 15-секундный ролик в контексте «Тёплого кадра»' + fileInfo;
+    result = 'Видео готово: 15-секундный ролик в контексте «Орды ИИ»' + fileInfo;
   } else if (type === 'image') {
-    result = 'Изображение готово: кадр в стиле «Тёплого кадра»' + fileInfo;
+    result = 'Изображение готово: кадр в стиле «Орды ИИ»' + fileInfo;
   } else {
-    result = 'Текст готов: структурированная статья в контексте «Тёплого кадра»' + fileInfo;
+    result = 'Текст готов: структурированная статья в контексте «Орды ИИ»' + fileInfo;
   }
   el.textContent = result;
 
@@ -791,7 +792,7 @@ function init() {
     saveSetting(STORE_KEY.seeded, '1');
     chatHistory.push({
       modelId: 'accio',
-      text: 'Привет! Я Accio Work. Это общий чат «Тёплого кадра» — все 5 моделей видят сообщения друг друга. Выбери режим и задай вопрос.',
+      text: 'Привет! Я Accio Work. Это общий чат «Орды ИИ» — все 5 моделей видят сообщения друг друга. Выбери режим и задай вопрос.',
       time: formatTime(Date.now())
     });
     saveChatHistory();
