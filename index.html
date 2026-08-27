@@ -160,10 +160,22 @@
   .model-info .m-desc { font-size: 12px; color: var(--text-secondary); }
   .model-check { font-size: 18px; font-weight: 700; color: var(--fb-blue); }
 
+  /* ===== Агенты и длительность видео ===== */
+  .dur-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .dur-bar { margin-bottom: 0; flex: 1; min-width: 200px; }
+  .agent-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+  .agent-card { display: flex; gap: 12px; align-items: center; border: 2px solid var(--border); border-radius: var(--radius); padding: 12px; background: #fff; }
+  .agent-card .avatar { width: 44px; height: 44px; font-size: 14px; flex: 0 0 44px; }
+  .agent-info { flex: 1; min-width: 0; }
+  .agent-info .a-name { font-weight: 700; }
+  .agent-info .a-desc { font-size: 12px; color: var(--text-secondary); }
+  .agent-run { flex: 0 0 auto; }
+
   /* ===== Адаптив ===== */
   @media (min-width: 768px) {
     .gen-buttons { grid-template-columns: repeat(3, 1fr); }
     .model-grid { grid-template-columns: repeat(2, 1fr); }
+    .agent-grid { grid-template-columns: repeat(2, 1fr); }
     .chat-box { max-height: 60vh; }
   }
 </style>
@@ -185,6 +197,7 @@
     <button data-tab="chat" onclick="switchTab('chat')">Общий чат</button>
     <button data-tab="generation" onclick="switchTab('generation')">Генерация</button>
     <button data-tab="models" onclick="switchTab('models')">Модели</button>
+    <button data-tab="agents" onclick="switchTab('agents')">Агенты</button>
   </div>
 </nav>
 
@@ -255,6 +268,14 @@
         <div class="muted" id="uploadStatus">Поддерживаются изображения и видео</div>
       </div>
       <input type="file" id="fileInput" accept="image/*,video/*" style="display:none">
+      <div class="dur-row">
+        <span class="muted">Длительность видео:</span>
+        <div class="mode-bar dur-bar" id="durBar">
+          <button class="mode-btn active" data-dur="auto" onclick="selectDuration('auto')">Авто</button>
+          <button class="mode-btn" data-dur="30" onclick="selectDuration('30')">30 сек</button>
+          <button class="mode-btn" data-dur="60" onclick="selectDuration('60')">60 сек</button>
+        </div>
+      </div>
       <div class="gen-buttons">
         <button class="btn btn-blue" onclick="generateContent('video')">Сгенерировать видео</button>
         <button class="btn btn-green" onclick="generateContent('image')">Сгенерировать изображение</button>
@@ -270,6 +291,15 @@
       <h2>Выбор активной модели</h2>
       <p class="muted">Активная модель отвечает по кнопке «Отправить». Кнопка «Всем» вызывает все 5 моделей сразу. Нажмите на карточку, чтобы выбрать модель.</p>
       <div class="model-grid" id="modelGrid"></div>
+    </div>
+  </section>
+
+  <!-- ===== ВКЛАДКА: АГЕНТЫ ===== -->
+  <section id="tab-agents" class="section">
+    <div class="card">
+      <h2>Готовые агенты</h2>
+      <p class="muted">Каждый агент — специалист в своей области. «Запустить» открывает его в общем чате, где он выполняет задачу и отчитывается. (Демо-режим: реальные движки подключим позже.)</p>
+      <div class="agent-grid" id="agentGrid"></div>
     </div>
   </section>
 
@@ -309,6 +339,23 @@ const MODELS = {
     desc: 'Рабочий ИИ-ассистент. Помогает с задачами, документами и исследованиями.'
   }
 };
+
+// Готовые агенты (вкладка «Агенты»): запускаются в общем чате
+const AGENTS = {
+  video: { id: 'video', name: 'Видеорежиссёр', short: 'ВР', color: '#c62828', desc: 'Создаёт ролики, нарезки и видео-сценарии.', task: 'создать ролик по ТЗ (сценарий + монтаж)', result: 'ролик смонтирован: сценарий, нарезка и тайминг готовы.' },
+  design: { id: 'design', name: 'Дизайнер', short: 'ДЗ', color: '#6a1b9a', desc: 'Палитры, макеты, баннеры под бренд.', task: 'собрать палитру и макеты под бренд', result: 'палитра из 5 цветов, CSS-переменные и 2 макета готовы.' },
+  copy: { id: 'copy', name: 'Копирайтер', short: 'КП', color: '#1565c0', desc: 'Тексты, SEO-статьи, описания, посты.', task: 'написать SEO-статью по теме', result: 'статья готова: объём и структура соответствуют ТЗ.' },
+  composer: { id: 'composer', name: 'Композитор', short: 'КМ', color: '#00695c', desc: 'Музыка, дорожки и звуковое оформление.', task: 'создать фоновую музыку и звуковое оформление', result: 'дорожка и набор звуковых эффектов готовы.' },
+  analyst: { id: 'analyst', name: 'Аналитик', short: 'АН', color: '#2e7d32', desc: 'Данные, отчёты, мониторинг метрик.', task: 'собрать данные и подготовить отчёт', result: 'отчёт готов: метрики, динамика и выводы.' },
+  blogger: { id: 'blogger', name: 'Аватар-блогер', short: 'АБ', color: '#e65100', desc: 'Контент-план и посты для соцсетей.', task: 'составить контент-план и посты', result: 'план на неделю и 5 постов готовы.' }
+};
+
+// Кто пишет сообщение: модель, агент или Accio по умолчанию
+function getSender(modelId) {
+  if (MODELS[modelId]) return MODELS[modelId];
+  if (AGENTS[modelId]) return AGENTS[modelId];
+  return MODELS.accio;
+}
 
 // Варианты ответов для каждой модели (эмуляция)
 const REPLIES = {
@@ -359,6 +406,7 @@ const STORE_KEY = {
   model: 'tp_selected_model',
   mode: 'tp_mode',
   gen: 'tp_generated',
+  dur: 'tp_video_duration',
   seeded: 'tp_seeded'
 };
 
@@ -369,6 +417,7 @@ let currentMode = 'advice'; // advice | critic | refine
 let selectedModel = 'ox';   // id из MODELS
 let isBusy = false;         // защита от параллельных генераций
 let lastUploadedFile = null;
+let videoDuration = 'auto'; // auto | '30' | '60'
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -427,7 +476,7 @@ function renderMessageEl(msg) {
   wrap.className = isUser ? 'msg user' : 'msg';
 
   if (!isUser) {
-    const model = MODELS[msg.modelId] || MODELS.accio;
+    const model = getSender(msg.modelId);
     const avatar = document.createElement('div');
     avatar.className = 'avatar';
     avatar.style.background = model.color;
@@ -444,7 +493,7 @@ function renderMessageEl(msg) {
     name.textContent = 'Вы';
     name.style.color = '#1877f2';
   } else {
-    const model = MODELS[msg.modelId] || MODELS.accio;
+    const model = getSender(msg.modelId);
     name.textContent = model.name;
     name.style.color = model.color;
   }
@@ -453,7 +502,7 @@ function renderMessageEl(msg) {
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
   if (!isUser) {
-    const model = MODELS[msg.modelId] || MODELS.accio;
+    const model = getSender(msg.modelId);
     bubble.style.borderLeftColor = model.color;
   }
   bubble.innerHTML = highlightMentions(msg.text);
@@ -605,6 +654,18 @@ function updateModeButtons() {
   });
 }
 
+function selectDuration(dur) {
+  videoDuration = dur;
+  saveSetting(STORE_KEY.dur, dur);
+  updateDurButtons();
+}
+
+function updateDurButtons() {
+  document.querySelectorAll('#durBar .mode-btn').forEach(function (btn) {
+    btn.classList.toggle('active', btn.dataset.dur === videoDuration);
+  });
+}
+
 function selectModel(id) {
   if (!MODELS[id]) return;
   selectedModel = id;
@@ -675,7 +736,61 @@ function updateChatHint() {
   hint.innerHTML =
     'Активная модель: <b style="color:' + model.color + '">' + model.name + '</b> · ' +
     'Режим: <b>' + MODE_NAMES[currentMode] + '</b> · ' +
-    'Упомяните модель через @, например @Ox Alpha';
+    'Упомяните модель через @ (например @Ox Alpha) или запустите агента на вкладке «Агенты»';
+}
+
+/* ===== 8.5 АГЕНТЫ ===== */
+
+function renderAgents() {
+  const grid = document.getElementById('agentGrid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  Object.values(AGENTS).forEach(function (a) {
+    const card = document.createElement('div');
+    card.className = 'agent-card';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar';
+    avatar.style.background = a.color;
+    avatar.textContent = a.short;
+
+    const info = document.createElement('div');
+    info.className = 'agent-info';
+    const name = document.createElement('div');
+    name.className = 'a-name';
+    name.style.color = a.color;
+    name.textContent = a.name;
+    const desc = document.createElement('div');
+    desc.className = 'a-desc';
+    desc.textContent = a.desc;
+    info.appendChild(name);
+    info.appendChild(desc);
+
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-blue agent-run';
+    btn.textContent = 'Запустить';
+    btn.onclick = function () { runAgent(a.id); };
+
+    card.appendChild(avatar);
+    card.appendChild(info);
+    card.appendChild(btn);
+    grid.appendChild(card);
+  });
+}
+
+// Запуск агента: открывает вкладку чата и выполняет задачу (демо-эмуляция)
+async function runAgent(id) {
+  if (isBusy || !AGENTS[id]) return;
+  switchTab('chat');
+  const a = AGENTS[id];
+  addMessage(id, 'Запущен агент «' + a.name + '»: ' + a.task);
+  isBusy = true;
+  try {
+    await sleep(1200 + Math.random() * 1200);
+    addMessage(id, 'Готово: ' + a.result + MODE_SUFFIX[currentMode]);
+  } finally {
+    isBusy = false;
+  }
 }
 
 /* ===== 9. ВКЛАДКИ ===== */
@@ -729,7 +844,10 @@ async function generateContent(type) {
   const fileInfo = lastUploadedFile ? ' (на основе файла: ' + lastUploadedFile + ')' : '';
   let result;
   if (type === 'video') {
-    result = 'Видео готово: 15-секундный ролик в контексте «Орды ИИ»' + fileInfo;
+    var secs = videoDuration === 'auto'
+      ? [15, 30, 60][Math.floor(Math.random() * 3)]
+      : parseInt(videoDuration, 10);
+    result = 'Видео готово: ролик на ' + secs + ' сек в контексте «Орды ИИ»' + fileInfo;
   } else if (type === 'image') {
     result = 'Изображение готово: кадр в стиле «Орды ИИ»' + fileInfo;
   } else {
@@ -786,6 +904,7 @@ function init() {
   loadChatHistory();
   selectedModel = localStorage.getItem(STORE_KEY.model) || 'ox';
   currentMode = localStorage.getItem(STORE_KEY.mode) || 'advice';
+  videoDuration = localStorage.getItem(STORE_KEY.dur) || 'auto';
 
   // Приветственное сообщение при первом запуске
   if (!chatHistory.length && !localStorage.getItem(STORE_KEY.seeded)) {
@@ -799,7 +918,9 @@ function init() {
   }
 
   updateModeButtons();
+  updateDurButtons();
   renderModels();
+  renderAgents();
   renderMessages();
   renderGenerated();
   updateChatHint();
