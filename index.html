@@ -357,6 +357,38 @@ function getSender(modelId) {
   return MODELS.accio;
 }
 
+// Реальное API (OpenRouter через Cloudflare Worker).
+// Пусто = демо-эмуляция. После деплоя Worker вставь его URL сюда.
+const API_WORKER_URL = '';
+// Соответствие моделей «Орды» реальным бесплатным моделям OpenRouter (проверено 28.08.2026)
+const MODEL_ROUTING = {
+  ox: 'z-ai/glm-5.2:free',
+  'qwen-flash': 'google/gemma-4-26b-a4b-it:free',
+  'qwen-27b': 'nvidia/nemotron-3-ultra-550b-a55b:free',
+  mimo: 'thinkingmachines/inkling:free',
+  accio: 'poolside/laguna-xs-2.1:free'
+};
+
+// Запрос к реальной модели через Worker. При ошибке — пробуем следующую модель.
+// Вернёт null, если Worker не настроен или все модели упали (тогда эмуляция).
+async function askRealModel(modelId, userText) {
+  if (!API_WORKER_URL) return null;
+  const tries = [modelId].concat(Object.keys(MODEL_ROUTING).filter(function (id) { return id !== modelId; }));
+  for (const id of tries) {
+    try {
+      const res = await fetch(API_WORKER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: MODEL_ROUTING[id], messages: [{ role: 'user', content: userText }], mode: currentMode })
+      });
+      if (!res.ok) continue;
+      const data = await res.json();
+      if (data && data.text) return data.text;
+    } catch (e) { continue; }
+  }
+  return null;
+}
+
 // Варианты ответов для каждой модели (эмуляция)
 const REPLIES = {
   ox: [
@@ -568,15 +600,21 @@ function sendMessage(toAll) {
   generateModelReply(target, text, true);
 }
 
-// Генерация ответа одной модели (эмуляция)
+// Генерация ответа одной модели: реальное API (если настроено), иначе эмуляция
 async function generateModelReply(modelId, userText, withDelay) {
   if (isBusy) return;
   isBusy = true;
   try {
     if (withDelay) await sleep(500 + Math.random() * 600);
-    const pool = REPLIES[modelId] || REPLIES.accio;
-    const reply = pool[Math.floor(Math.random() * pool.length)];
-    addMessage(modelId, reply + MODE_SUFFIX[currentMode]);
+    const real = await askRealModel(modelId, userText || '');
+    let text;
+    if (real !== null) {
+      text = real;
+    } else {
+      const pool = REPLIES[modelId] || REPLIES.accio;
+      text = pool[Math.floor(Math.random() * pool.length)] + MODE_SUFFIX[currentMode];
+    }
+    addMessage(modelId, text);
   } finally {
     isBusy = false;
   }
@@ -589,8 +627,9 @@ async function callAllModels(userText) {
   try {
     for (const id of Object.keys(MODELS)) {
       await sleep(450 + Math.random() * 500);
+      const real = await askRealModel(id, userText || '');
       const pool = REPLIES[id];
-      addMessage(id, pool[Math.floor(Math.random() * pool.length)] + MODE_SUFFIX[currentMode]);
+      addMessage(id, real !== null ? real : pool[Math.floor(Math.random() * pool.length)] + MODE_SUFFIX[currentMode]);
     }
   } finally {
     isBusy = false;
@@ -611,9 +650,10 @@ async function brainstorm() {
     for (let i = 0; i < ids.length; i++) {
       await sleep(600 + i * 350);
       const pool = REPLIES[ids[i]];
+      const real = await askRealModel(ids[i], text || 'текущая задача');
       addMessage(
         ids[i],
-        'Идея ' + (i + 1) + ': ' + pool[Math.floor(Math.random() * pool.length)] + MODE_SUFFIX[currentMode]
+        'Идея ' + (i + 1) + ': ' + (real !== null ? real : pool[Math.floor(Math.random() * pool.length)] + MODE_SUFFIX[currentMode])
       );
     }
   } finally {
