@@ -580,6 +580,10 @@ function detectMention(text) {
   for (const m of Object.values(MODELS)) {
     if (lower.indexOf('@' + m.name.toLowerCase()) !== -1) return m.id;
   }
+  // Без @: вопрос, начинающийся с имени модели (например, «Accio work, ты создал сайт?»)
+  for (const m of Object.values(MODELS)) {
+    if (lower.indexOf(m.name.toLowerCase()) === 0) return m.id;
+  }
   return null;
 }
 
@@ -600,6 +604,38 @@ function sendMessage(toAll) {
   generateModelReply(target, text, true);
 }
 
+/* ===== Демо-ответы с пониманием вопроса ===== */
+
+function detectIntent(text) {
+  const t = text.toLowerCase();
+  if (t.indexOf('создал') !== -1 || t.indexOf('сделал') !== -1) return 'creator';
+  if (t.indexOf('что это') !== -1 || t.indexOf('что такое') !== -1 || t.indexOf('что за') !== -1) return 'what';
+  if (t.indexOf('как пользоваться') !== -1 || t.indexOf('как работает') !== -1 || t.indexOf('инструкц') !== -1) return 'how';
+  if (t.indexOf('модел') !== -1 && t.indexOf('сколько') !== -1) return 'models';
+  if (t.indexOf('okx') !== -1 || t.indexOf('биржа') !== -1 || t.indexOf('заработ') !== -1) return 'okx';
+  return null;
+}
+
+const INTENT_ANSWERS = {
+  creator: 'Да, сайт «Орда ИИ» (раньше — «Тёплый кадр») собрал и опубликовал Accio Work: один файл index.html, задеплоен на GitHub Pages. Сейчас модели отвечают в демо-режиме, реальные API подключим позже.',
+  what: '«Орда ИИ» — это общий чат, где 5 ИИ-моделей работают как «Совет директоров»: дают советы, критикуют и дорабатывают идеи. Плюс вкладки «Генерация», «Модели» и «Агенты».',
+  how: 'Задай вопрос в поле ниже — ответит выбранная модель. Кнопка «Всем» — ответы всех 5 моделей, «Мозговой штурм» — решения по очереди. Режимы «Совет / Критика / Доработка» — над чатом. Упомяни модель через @, чтобы ответила именно она.',
+  models: 'В чате 5 моделей: Ox Alpha (Z.ai), Qwen Flash (Alibaba), Qwen 27B (Alibaba), MiMo (Xiaomi) и Accio Work. Выбрать активную можно на вкладке «Модели».',
+  okx: 'Интеграция с OKX AI подготовлена: гайд и промт-оркестратор лежат в проекте. Запуск на бирже требует кошелёк агента и клиент с Onchain OS — сделаем, когда будешь готов.'
+};
+
+// Демо-ответ: понимает простые вопросы о приложении, иначе — контекстная фраза с цитатой вопроса
+function buildDemoReply(modelId, userText) {
+  const intent = detectIntent(userText || '');
+  if (intent && INTENT_ANSWERS[intent]) {
+    return INTENT_ANSWERS[intent];
+  }
+  const pool = REPLIES[modelId] || REPLIES.accio;
+  const base = pool[Math.floor(Math.random() * pool.length)];
+  const quote = (userText || '').replace(/\s+/g, ' ').trim().slice(0, 60);
+  return (quote ? 'По твоему вопросу: «' + quote + '» — ' : '') + base + MODE_SUFFIX[currentMode];
+}
+
 // Генерация ответа одной модели: реальное API (если настроено), иначе эмуляция
 async function generateModelReply(modelId, userText, withDelay) {
   if (isBusy) return;
@@ -607,13 +643,7 @@ async function generateModelReply(modelId, userText, withDelay) {
   try {
     if (withDelay) await sleep(500 + Math.random() * 600);
     const real = await askRealModel(modelId, userText || '');
-    let text;
-    if (real !== null) {
-      text = real;
-    } else {
-      const pool = REPLIES[modelId] || REPLIES.accio;
-      text = pool[Math.floor(Math.random() * pool.length)] + MODE_SUFFIX[currentMode];
-    }
+    const text = real !== null ? real : buildDemoReply(modelId, userText || '');
     addMessage(modelId, text);
   } finally {
     isBusy = false;
@@ -628,8 +658,7 @@ async function callAllModels(userText) {
     for (const id of Object.keys(MODELS)) {
       await sleep(450 + Math.random() * 500);
       const real = await askRealModel(id, userText || '');
-      const pool = REPLIES[id];
-      addMessage(id, real !== null ? real : pool[Math.floor(Math.random() * pool.length)] + MODE_SUFFIX[currentMode]);
+      addMessage(id, real !== null ? real : buildDemoReply(id, userText || ''));
     }
   } finally {
     isBusy = false;
@@ -649,11 +678,10 @@ async function brainstorm() {
     const ids = Object.keys(MODELS);
     for (let i = 0; i < ids.length; i++) {
       await sleep(600 + i * 350);
-      const pool = REPLIES[ids[i]];
       const real = await askRealModel(ids[i], text || 'текущая задача');
       addMessage(
         ids[i],
-        'Идея ' + (i + 1) + ': ' + (real !== null ? real : pool[Math.floor(Math.random() * pool.length)] + MODE_SUFFIX[currentMode])
+        'Идея ' + (i + 1) + ': ' + (real !== null ? real : buildDemoReply(ids[i], text || 'текущая задача'))
       );
     }
   } finally {
@@ -776,7 +804,7 @@ function updateChatHint() {
   hint.innerHTML =
     'Активная модель: <b style="color:' + model.color + '">' + model.name + '</b> · ' +
     'Режим: <b>' + MODE_NAMES[currentMode] + '</b> · ' +
-    'Упомяните модель через @ (например @Ox Alpha) или запустите агента на вкладке «Агенты»';
+    'Упомяните модель через @ (например @Ox Alpha) или начните вопрос с её имени — ответит она';
 }
 
 /* ===== 8.5 АГЕНТЫ ===== */
