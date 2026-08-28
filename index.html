@@ -383,7 +383,7 @@ async function askRealModel(modelId, userText) {
       });
       if (!res.ok) continue;
       const data = await res.json();
-      if (data && data.text) return data.text;
+      if (data && data.text && data.text.indexOf('Ошибка') !== 0) return data.text;
     } catch (e) { continue; }
   }
   return null;
