@@ -144,6 +144,7 @@
     background: #f0f2f5; border-left: 3px solid var(--fb-blue);
     border-radius: 4px 10px 10px 4px; padding: 10px 12px; font-size: 13px;
     animation: fadeIn .3s ease; word-wrap: break-word;
+    white-space: pre-wrap; max-height: 360px; overflow-y: auto;
   }
 
   /* ===== Модели ===== */
@@ -900,6 +901,13 @@ function renderGenerated() {
   });
 }
 
+// Реальная генерация текста через подключённые модели (OpenRouter)
+async function generateRealText() {
+  const topic = lastUploadedFile ? ' на тему: ' + lastUploadedFile : ' (выбери тему — например, напиши в чате)';
+  const prompt = 'Напиши структурированный текст по-русски, 400-700 слов' + topic + '. Оформи с заголовками и абзацами, без воды.';
+  return askRealModel('accio', prompt);
+}
+
 async function generateContent(type) {
   const labels = { video: 'видео', image: 'изображение', text: 'текст' };
   const label = labels[type] || type;
@@ -922,9 +930,11 @@ async function generateContent(type) {
   } else if (type === 'image') {
     result = 'Изображение готово: кадр в стиле «Орды ИИ»' + fileInfo;
   } else {
-    result = 'Текст готов: структурированная статья в контексте «Орды ИИ»' + fileInfo;
+    const realText = await generateRealText();
+    result = realText !== null ? realText : 'Текст готов: структурированная статья в контексте «Орды ИИ»' + fileInfo;
   }
   el.textContent = result;
+  try { el.scrollIntoView({ behavior: 'smooth', block: 'nearest' }); } catch (e) {}
 
   const list = loadGenerated();
   list.unshift(result);
