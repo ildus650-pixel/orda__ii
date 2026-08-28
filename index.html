@@ -240,7 +240,7 @@
         <button class="mode-btn" data-mode="critic" onclick="selectMode('critic')">Критика</button>
         <button class="mode-btn" data-mode="refine" onclick="selectMode('refine')">Доработка</button>
       </div>
-      <div class="hint" id="demoHint">Демо-режим: ответы моделей — эмуляция. Подключение реальных API и бирж настроим позже.</div>
+      <div class="hint" id="demoHint">Реальные модели подключены (OpenRouter через Cloudflare Worker). При недоступности API — автоматическая эмуляция.</div>
       <div class="chat-box" id="chatBox"></div>
       <div class="chat-controls">
         <div class="input-row">
@@ -359,7 +359,7 @@ function getSender(modelId) {
 
 // Реальное API (OpenRouter через Cloudflare Worker).
 // Пусто = демо-эмуляция. После деплоя Worker вставь его URL сюда.
-const API_WORKER_URL = '';
+const API_WORKER_URL = 'https://orda-ai-proxy.orda-ai.workers.dev';
 // Соответствие моделей «Орды» реальным бесплатным моделям OpenRouter (проверено 28.08.2026)
 const MODEL_ROUTING = {
   ox: 'z-ai/glm-5.2:free',
@@ -617,7 +617,7 @@ function detectIntent(text) {
 }
 
 const INTENT_ANSWERS = {
-  creator: 'Да, сайт «Орда ИИ» (раньше — «Тёплый кадр») собрал и опубликовал Accio Work: один файл index.html, задеплоен на GitHub Pages. Сейчас модели отвечают в демо-режиме, реальные API подключим позже.',
+  creator: 'Да, сайт «Орда ИИ» (раньше — «Тёплый кадр») собрал и опубликовал Accio Work: один файл index.html на GitHub Pages. Модели отвечают через OpenRouter (бесплатные модели), ключ API хранится в Cloudflare Worker.',
   what: '«Орда ИИ» — это общий чат, где 5 ИИ-моделей работают как «Совет директоров»: дают советы, критикуют и дорабатывают идеи. Плюс вкладки «Генерация», «Модели» и «Агенты».',
   how: 'Задай вопрос в поле ниже — ответит выбранная модель. Кнопка «Всем» — ответы всех 5 моделей, «Мозговой штурм» — решения по очереди. Режимы «Совет / Критика / Доработка» — над чатом. Упомяни модель через @, чтобы ответила именно она.',
   models: 'В чате 5 моделей: Ox Alpha (Z.ai), Qwen Flash (Alibaba), Qwen 27B (Alibaba), MiMo (Xiaomi) и Accio Work. Выбрать активную можно на вкладке «Модели».',
